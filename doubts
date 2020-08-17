@@ -1,0 +1,2 @@
+1. Primary key and range key are same => it should throw error.
+2. Deleted query not emitting error

@@ -1,0 +1,105 @@
+  Book.create(
+    {
+      bookName : 'Book22', 
+      authorName : 'Author2',
+      category : 'Category1',
+      bookPrice : 50,
+      bookDescription : 'Book23 is very Nice book',
+      bookCount : 0
+    }, 
+    function (err, acc) {
+    console.log('created book in DynamoDB', err);
+  });
+
+    Book.query('Category2')
+    .usingIndex('category-index')
+    .exec(printResults);
+
+  Book.query('Author2')
+  .usingIndex('authorName-index')
+  .exec(printResults);
+  
+
+   Book.get('Death Note', {ConsistentRead: true}, function (err, acc) {
+    console.log('got account', acc.get('char'));
+  });
+  
+
+  Book.destroy('Naruto', function (err) {
+    console.log('account deleted');
+  });
+
+
+  Book.update({bookName: 'Abc1',  char : 'Light', name:'dfgf'  }, function (err, acc) {
+    console.log('update account', acc.get('bookName')); // prints the old account name
+  });
+
+
+
+// router.post('/user/:id', ctx => {
+//     //console.log(ctx.request.body);    
+// })
+
+router.get('/user/:id', ctx => {
+    ctx.body = users[ctx.params.id];
+})
+
+
+function getBookByCategory(category){
+    return new Promise((resolve, reject) => {
+        Book.Book.query(category)
+            .usingIndex('category-index')
+            .exec((error, res)=>{
+            if(error){
+                reject(error)
+            } 
+            if(res){
+                const data=JSON.parse(JSON.stringify(res.Items))
+                resolve(data)
+            }
+            resolve(null)
+            })
+        })
+}
+
+
+
+
+
+
+
+
+
+
+const handler = require('./handler');
+
+const Router = require('koa-router');
+
+const router = new Router();
+
+router.get('/getBookByCategory/:category', handler.getBookByCategory);
+
+router.get('/getBookByName/:bookName', handler.getBookByName);
+
+router.get('/getBookByAuthorName/:authorName', handler.getBookByAuthorName);
+
+router.get('/getBookFilterByAuthorName_Category/:authorName/:category', handler.getBookFilterByAuthorName_Category);
+
+router.get('/updateBookCount/:bookName/:authorName', handler.updateBookCount);
+
+router.get('/isAvailable/:authorName/:bookName', handler.isAvailable);
+
+router.get('/deleteUser/:userId', handler.deleteUser);
+
+router.post('/upload',handler.uploadPic);
+
+// router.post('/addBook', handler.addBook);
+
+router.post('/addBook', async;
+
+
+router.post('/addUser', handler.addUser); 
+
+module.exports = router;
+
+// app.use(koaBody({ multipart: true, json: true }));

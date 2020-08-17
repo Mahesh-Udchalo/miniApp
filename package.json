@@ -1,0 +1,23 @@
+{
+  "name": "miniApp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "koa.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.734.0",
+    "dynogels": "^9.1.0",
+    "fs": "0.0.1-security",
+    "joi": "10.6.0",
+    "koa": "^2.13.0",
+    "koa-body": "^4.2.0",
+    "koa-router": "^9.4.0",
+    "lodash": "^4.17.20",
+    "util": "^0.12.3"
+  }
+}
