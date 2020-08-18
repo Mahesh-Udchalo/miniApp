@@ -5,11 +5,11 @@ var User = db.dynogels.define('User', {
     hashKey : 'userId',
 
     schema : {
-        userId : Joi.string(),
-        userName : Joi.string(),	
-        isPrimeMember : Joi.boolean(),
-        walletAmount : Joi.number(),
-        issuedBook : Joi.array()  
+      userId : Joi.string().required(),
+      userName : Joi.string().required(),	
+      isPrimeMember : Joi.boolean().required(),
+      walletAmount : Joi.number().required().min(0).positive().integer(),
+      issuedBook : Joi.array()  
     },
     tableName : 'User',
     indexes : [
@@ -18,6 +18,4 @@ var User = db.dynogels.define('User', {
   });
 
 
-  module.exports = {
-    User
-  }
+  module.exports =  User;

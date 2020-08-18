@@ -62,10 +62,61 @@ function getBookByCategory(category){
         })
 }
 
+    Book.Book.create(
+        {
+            bookId : book.bookId.trim() ,
+            bookName : book.bookName.trim() , 
+            authorName : book.authorName.trim() ,
+            category : book.category.trim() ,
+            bookPrice : book.bookPrice.trim() ,
+            bookDescription : book.bookDescription.trim() ,
+            bookCount : book.bookCount.trim() ,
+            bookUrl : bookUrl.trim() 
+        },
+        (err, res) => {
+            
+            if(err){
+                const firstWord = err.details[0].message.split(" ")
+                console.log(firstWord[0])
+                reject(firstWord[0]+" should be valid !");      
+            }
+            if(res){
+                const data=JSON.parse(JSON.stringify(res));
+                resolve(data);    
+            }
+            resolve(null);
+        }
+    );
+    })
 
 
 
-
+    Book.Book.create(
+        {
+            bookId : book.bookId.trim() ,
+            bookName : book.bookName.trim() , 
+            authorName : book.authorName.trim() ,
+            category : book.category.trim() ,
+            bookPrice : book.bookPrice.trim() ,
+            bookDescription : book.bookDescription.trim() ,
+            bookCount : book.bookCount.trim() ,
+            bookUrl : bookUrl.trim() 
+        },
+        (err, res) => {
+            
+            if(err){
+                const firstWord = err.details[0].message.split(" ")
+                console.log(firstWord[0])
+                reject(firstWord[0]+" should be valid !");      
+            }
+            if(res){
+                const data=JSON.parse(JSON.stringify(res));
+                resolve(data);    
+            }
+            resolve(null);
+        }
+    );
+    })
 
 
 
@@ -103,3 +154,4 @@ router.post('/addUser', handler.addUser);
 module.exports = router;
 
 // app.use(koaBody({ multipart: true, json: true }));
+

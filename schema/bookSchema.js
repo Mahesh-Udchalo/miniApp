@@ -5,13 +5,13 @@ var Book = db.dynogels.define('Book', {
     hashKey : 'bookId',
 
     schema : {
-      bookId : Joi.string().required(),
+      bookId : Joi.string().required().alphanum(),
       bookName   : Joi.string().required(),
       authorName : Joi.string().required(),
       category : Joi.string().required(),
-      bookPrice : Joi.number(),
+      bookPrice : Joi.number().required(),
       bookDescription : Joi.string(),
-      bookCount : Joi.number(),
+      bookCount : Joi.number().required(),
       bookUrl : Joi.string()
     },
     tableName : 'Book',
@@ -23,6 +23,5 @@ var Book = db.dynogels.define('Book', {
   });
 
 
-  module.exports = {
-    Book
-  }
+  module.exports = Book
+  

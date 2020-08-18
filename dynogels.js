@@ -1,6 +1,6 @@
 var dynogels = require('dynogels');
 
-const cred = require('../credential');
+const cred = require('./credential');
 
 dynogels.AWS.config.update({
 

@@ -1,28 +1,34 @@
 const Book = require('./schema/bookSchema')
 const User = require('./schema/userSchema')
 
+const db = require('./db');
 const cred = require('./credential')
 const fs = require('fs')
 const AWS = require('aws-sdk');
 
 
-async function getBookByCategory(ctx){
+async function filter(ctx){
 
-    var category = ctx.params.category;
-    var promise = new Promise((resolve, reject) => {
-        Book.Book.query(category)
-            .usingIndex('category-index')
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        });
+    var resp = ctx.query;
+
+    if(resp.authorName && resp.category){
+        await mixFilter(ctx);
+    }
+    else if(resp.authorName){
+        await basicFilter("authorName-index" , resp.authorName, ctx);
+    }
+    else if(resp.category){
+        await basicFilter("category-index" , resp.category, ctx);
+    }
+    else{
+        await basicFilter("bookName-index" , resp.bookName, ctx);
+    }
+}
+
+
+async function basicFilter(ind, param, ctx){
+
+    var promise = db.basicFilter(ind, param)
 
     await promise.then(
         result  => {
@@ -36,100 +42,17 @@ async function getBookByCategory(ctx){
             }
         }
     ).catch(err =>{
+        console.log(err);
         ctx.body = 'Something went wrong';
     }) 
 }
 
+async function mixFilter(ctx){
 
-async function getBookByName(ctx){
+    var authorName = ctx.query.authorName;
+    var category = ctx.query.category;
 
-    var bookName = ctx.params.bookName;
-    var promise = new Promise((resolve, reject) => {
-        Book.Book.query(bookName)
-            .usingIndex('bookName-index')
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        })
-
-    await promise.then(
-        result  => {
-            if(result == ''){
-                console.log('No such data');
-                ctx.body = "No such data";
-            }
-            else{
-                console.log(result);
-                ctx.body = result;
-            }
-        }
-    ).catch(err =>{
-        ctx.body = 'error'+ err;
-    }) 
-}
-
-
-async function getBookByAuthorName(ctx){
-
-    var authorName = ctx.params.authorName;
-    var promise = new Promise((resolve, reject) => {
-        Book.Book.query(authorName)
-            .usingIndex('authorName-index')
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        })
-
-    await promise.then(
-        result  => {
-            if(result == ''){
-                console.log('No such data');
-                ctx.body = "No such data";
-            }
-            else{
-                console.log(result);
-                ctx.body = result;
-            }
-        }
-    ).catch(err =>{
-        ctx.body = 'error'+ err;
-    })     
-}
-
-async function getBookFilterByAuthorName_Category(ctx){
-
-    var authorName = ctx.params.authorName;
-    var category = ctx.params.category;
-
-    var promise = new Promise((resolve, reject) => {
-        Book.Book.query(authorName)
-            .usingIndex('authorName-index')
-            .filter('category').contains(category)
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        })
+    var promise = db.mixFilter(authorName, category)
 
         await promise.then(
             result  => {
@@ -143,171 +66,185 @@ async function getBookFilterByAuthorName_Category(ctx){
                 }
             }
         ).catch(err =>{
-            ctx.body = 'error'+ err;
+            console.log(err);
+            ctx.body = 'Something went wrong';
         }) 
 }
 
 async function isAvailable(ctx){
 
-    var authorName = ctx.params.authorName;
-    var bookName = ctx.params.bookName;
+    var authorName = ctx.query.authorName;
+    var bookName = ctx.query.bookName;
     
-    var promise = new Promise((resolve, reject) => {
-        Book.Book.query(authorName)
-            .usingIndex('authorName-index')
-            .filter('bookName').contains(bookName)
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        })
+    var promise = db.isAvailable(authorName, bookName);
 
     await promise.then(
         result => {
             console.log(result);
-             if(result[0].bookCount == 0){
-                console.log('Book is not available');
-                ctx.body = "Book is not available";
-             }
-             else{
-                console.log('Book is available');
-                ctx.body = "Book is available";
-             }
+            if(result == ''){
+                console.log('No such data');
+                ctx.body = "No such data";
+            }
+            else{
+                if(result[0].bookCount == 0){
+                    console.log('Book is not available');
+                    ctx.body = "Book is not available";
+                 }
+                 else{
+                    console.log('Book is available');
+                    ctx.body = "Book is available";
+                 }
+            }
         }
     ).catch(err =>{
-        ctx.body = 'error'+ err;
+        console.log(err);
+        ctx.body = 'Something went wrong';
     }) 
 }
 
 
 async function isPrime(ctx){
 
-    var userId = ctx.params.userId;
+    var userId = ctx.query.userId;
     
-    var promise = new Promise((resolve, reject) => {
-        User.User.query(userId)
-            .exec((error, res)=>{
-            if(error){
-                reject(error)
-            } 
-            if(res){
-                const data=JSON.parse(JSON.stringify(res.Items))
-                resolve(data)
-            }
-            resolve(null)
-            })
-        })
+    var promise = db.isPrime(userId);
 
     await promise.then(
         result => {
             console.log(result);
-             if(result[0].isPrimeMember == false){
-                console.log('User is not Prime');
-                ctx.body = "User is not Prime";
-             }
-             else{
-                console.log('User is Prime');
-                ctx.body = "User is Prime";
-             }
+            if(result == ''){
+                console.log('No such data');
+                ctx.body = "No such data";
+            }
+            else{
+                if(result[0].isPrimeMember == false){
+                    console.log('User is not Prime');
+                    ctx.body = "User is not Prime";
+                 }
+                 else{
+                    console.log('User is Prime');
+                    ctx.body = "User is Prime";
+                 }
+            }
         }
     ).catch(err =>{
-        ctx.body = 'error'+ err;
+        console.log(err);
+        ctx.body = 'Something went wrong';
     }) 
-}
-
-
-function decreaseBookCount(id, count){
-    return new Promise((resolve, reject) => {
-        Book.Book.update({bookId: id, bookCount: count }, 
-        (err, res) => {
-            if(err){
-                reject(err);
-            }
-            if(res){
-                var msg = "Updated BookName -> " + res.get('bookName')+" decremented count -> "+count+" from count -> "+(count+1);
-                resolve(msg);
-            }
-            resolve(null);
-          });
-        })
 }
 
 
 async function updateBookCount(ctx){
 
-    var bookName = ctx.params.bookName;
-    var authorName = ctx.params.authorName;
+    var bookName = ctx.request.body.bookName;
+    var authorName = ctx.request.body.authorName;
 
-    var promise1 = new Promise((resolve, reject) => {
-        Book.Book.query(authorName)
-            .usingIndex('authorName-index')
-            .filter('bookName').contains(bookName)
-            .exec((err, res) => {
-                if(err){
-                    reject(err);
-                }
-                if(res){
-                    data=JSON.parse(JSON.stringify(res.Items))
-                    resolve(data);    
-                }
-                resolve(null);
-          });
-    })
+    var promise1 = db.updateBookCount(authorName, bookName);
 
     await promise1.then(
         async (result) => {
-            var count = result[0].bookCount;
-            var id = result[0].bookId;
-            if(count>0){
-                count--;
-                await decreaseBookCount(id, count).then(
-                    result => {
-                        console.log(result);
-                        ctx.body = result;
-                    }
-                ).catch(err =>{
-                    ctx.body = 'error'+ err;
-                })
+
+            if(result == ''){
+                console.log(result);
+                ctx.body = 'No such data';
             }
             else{
-                var msg= "Can't Update Book Count because it is 0";
-                console.log(msg);
-                ctx.body = msg;
+                var count = result[0].bookCount;
+                var id = result[0].bookId;
+                if(count>0){
+                    count--;
+                    await db.decreaseBookCount(id, count).then(
+                        result => {
+                            console.log(result);
+                            ctx.body = result;
+                        }
+                    ).catch(err =>{
+                        ctx.body = 'error'+ err;
+                    })
+                }
+                else{
+                    var msg= "Can't Update Book Count because it is 0";
+                    console.log(msg);
+                    ctx.body = msg;
+                }
+    
             }
         }
     ).catch(err =>{
         console.log(err);
+        ctx.body = 'Something went wrong';
     }) 
 }
 
+async function validateBook(ctx){
+
+    var bookid = ctx.query.bookId;
+
+    var promise = db.validateBook(bookid);
+
+        var p = await promise.then(
+            res => {
+            if(res == null){
+                console.log('No such Book');
+                ctx.body = 'No such Book';
+                return (false);
+            }
+            else{
+                return(true);
+            }
+        }
+        )
+        return p;
+}
+
+async function validateUser(ctx){
+
+    var userid = ctx.query.userId;
+
+    var promise = db.validateUser(userid);
+
+        var p = await promise.then(
+            res => {
+            if(res == null){
+                console.log('No such User');
+                // ctx.body = 'No such User';
+                return(false);
+            }
+            else{
+                return(true);
+            }
+        }
+        )
+        return p;
+}
 
 async function placeOrder(ctx){
 
-    var userid = ctx.params.userId;
-    var bookid = ctx.params.bookId;
+    var validateuser = await validateUser(ctx);
+    var validatebook = await validateBook(ctx);
+    
+    if(validateuser &&  validatebook){
+        await validatedPlaceOrder(ctx);
+    }
+    else{
+        if(!validateuser && !validatebook){
+            ctx.body = 'No such User and Book';    
+        }
+        else if(! validateuser){
+            ctx.body = 'No such User';
+        }
+        else{
+            ctx.body = 'No such Book';
+        }
+    }
+}
 
-    var promise = new Promise((resolve) => {
-                 decreaseCount(bookid).then(
-                    (data) =>{               
-                        if(data==-1)
-                        {                    
-                            updateIssueBook(userid,bookid).then(data => resolve(data) )                
-                        }
-                        else{
-                            resolve(data);
-                        } 
-                    })
-                .catch(err =>
-                {
-                    {console.log(err)}                
-                })
-     })
+async function validatedPlaceOrder(ctx){
+
+    var userid = ctx.query.userId;
+    var bookid = ctx.query.bookId;
+
+    var promise = db.validatedPlaceOrder(bookid, userid);
 
     await promise.then(
         result  => {
@@ -317,123 +254,18 @@ async function placeOrder(ctx){
         
     ).catch(err =>
     {
-        ctx.body = 'error'+ err;
+        console.log(err);
+        ctx.body = 'Something went wrong';
     })
 }
-
-function decreaseCount(bookid){
-
-    return new Promise((resolve, reject) => {
-             Book.Book.get(bookid,(err, res)=>{
-                if(err){
-                    reject(err)
-                } 
-                if(res){
-                        let oldcount = res.get('bookCount');
-                        if(oldcount >0 )
-                        {
-                         let newcount=oldcount-1;
-                         updateCount(bookid,newcount).then(
-                            data => console.log(data.get("bookId"))); 
-                            resolve(-1);
-                        }
-                        else{
-                            resolve("out of stock");
-                        }
-                      }
-                resolve(null)
-        })
-     })
-}
-
-
-function updateCount(bookid,count){
-
-    return new Promise((resolve, reject) => {
-             Book.Book.update({'bookId': bookid,'bookCount': count},(err, res) =>{
-                if(err){
-                    reject(err)
-                } 
-                if(res){
-                    resolve(res)
-                      }
-                resolve(null)
-        })
-     })
-}
-
- function updateIssueBook(userid,bookid){
-
-    return new Promise((resolve, reject) => {
-             User.User.get(userid, (err, res)=>{
-                if(err){
-                    reject(err)
-                } 
-                if(res){
-                        if(res.get('issuedBook') == undefined) 
-                        {                 
-                            let issuedBook=[bookid];                
-                            updateuserbooks(userid,issuedBook).then(data => console.log(data))
-                            resolve("created new array to append",bookid)
-                        }
-                        else{
-                            let issuedbook = res.get('issuedBook')
-                            let  issuedBook=[...issuedbook,bookid];  
-                            updateuserbooks(userid,issuedBook).then(data => console.log(data))
-                            resolve("array updated")
-                        }                      
-                      }
-                resolve(null)
-            })
-     })
-}
-
-function updateuserbooks(userid,issuedBook){
-
-    return new Promise((resolve, reject) => {
-             User.User.update({"userId":userid,"issuedBook":issuedBook } ,(err, res)=>{
-                if(err){
-                    reject(err)
-                } 
-                if(res){
-                        resolve(res)
-                      }
-                resolve(null)
-        })
-     })
-}
-
 
 
 async function addBook(ctx){
 
     var book = ctx.request.body;
     var bookUrl = await uploadPic(ctx);
-    console.log(bookUrl);
-    var promise = new Promise((resolve, reject) => {
-    Book.Book.create(
-        {
-            bookId : book.bookId ,
-            bookName : book.bookName , 
-            authorName : book.authorName ,
-            category : book.category ,
-            bookPrice : book.bookPrice ,
-            bookDescription : book.bookDescription ,
-            bookCount : book.bookCount ,
-            bookUrl : bookUrl 
-        },
-        (err, res) => {
-            if(err){
-                reject(err);
-            }
-            if(res){
-                const data=JSON.parse(JSON.stringify(res));
-                resolve(data);    
-            }
-            resolve(null);
-        }
-    );
-    })
+
+    var promise = db.addBook(book, bookUrl);
 
     await promise.then(
         result => {
@@ -441,7 +273,8 @@ async function addBook(ctx){
             ctx.body = result;
         }
     ).catch(err =>{
-        ctx.body = 'error'+ err;
+        console.log(err);
+        ctx.body = err;
     }) 
 }
 
@@ -450,27 +283,7 @@ async function addUser(ctx){
 
     var user = ctx.request.body;
 
-    var promise = new Promise((resolve, reject) => {
-    User.User.create(
-        {
-            userId : user.userId ,
-            userName : user.userName , 
-            isPrimeMember : user.isPrimeMember ,
-            walletAmount : user.walletAmount ,
-            issuedBook : user.issuedBook 
-        },
-        (err, res) => {
-            if(err){
-                reject(err);
-            }
-            if(res){
-                const data=JSON.parse(JSON.stringify(res));
-                resolve(data);    
-            }
-            resolve(null);
-        }
-    );
-    })
+    var promise = db.addUser(user);
 
     await promise.then(
         result => {
@@ -478,25 +291,17 @@ async function addUser(ctx){
             ctx.body = result;
         }
     ).catch(err =>{
-        ctx.body = 'error'+ err;
+        console.log(err);
+        ctx.body = err;
     }) 
 }
 
 async function deleteUser(ctx){
 
-    var userId = ctx.params.userId;
+    console.log(ctx.query);
+    var userId = ctx.query.userId;
 
-    var promise = new Promise((resolve, reject) => {
-        User.User.destroy(userId, (err) => {
-            if(err){
-                reject(err);
-            }
-            else{
-                msg = "User deleted";
-                resolve(msg);
-            }
-          });
-        })
+    var promise = db.deleteUser(userId);
 
         await promise.then(
             result  => {
@@ -504,7 +309,8 @@ async function deleteUser(ctx){
                 ctx.body = result;
             }
         ).catch(err =>{
-            ctx.body = 'error'+ err;
+            console.log(err);
+            ctx.body = 'Something went wrong';
         }) 
 }
 
@@ -565,16 +371,10 @@ const upload = (details) => {
 
 
 module.exports = {
-    
-    getBookByAuthorName,
-    getBookByCategory,
-    getBookByName,
 
     addBook,
     addUser,
     deleteUser,
-    
-    getBookFilterByAuthorName_Category,
 
     updateBookCount,
  
@@ -583,6 +383,7 @@ module.exports = {
 
     uploadPic,
 
-    placeOrder
+    placeOrder,
+    filter
 }
 

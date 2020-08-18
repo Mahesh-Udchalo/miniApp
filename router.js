@@ -4,28 +4,20 @@ const Router = require('koa-router');
 
 const router = new Router();
 
-router.get('/getBookByCategory/:category', handler.getBookByCategory);
+router.get('/book/filter', handler.filter);
 
-router.get('/getBookByName/:bookName', handler.getBookByName);
+router.get('/book/isAvailable', handler.isAvailable);
 
-router.get('/getBookByAuthorName/:authorName', handler.getBookByAuthorName);
+router.put('/book/placeOrder', handler.placeOrder);
 
-router.get('/getBookFilterByAuthorName_Category/:authorName/:category', handler.getBookFilterByAuthorName_Category);
+router.post('/book', handler.addBook);
 
-router.get('/updateBookCount/:bookName/:authorName', handler.updateBookCount);
 
-router.get('/isAvailable/:authorName/:bookName', handler.isAvailable);
+router.post('/user', handler.addUser);
 
-router.post('/uploadPic', handler.uploadPic);
+router.delete('/user', handler.deleteUser);
 
-router.post('/addBook', handler.addBook);
+router.get('/user/isPrime', handler.isPrime);
 
-router.post('/addUser', handler.addUser);
-
-router.get('/deleteUser/:userId', handler.deleteUser);
-
-router.get('/placeOrder/:userId/:bookId', handler.placeOrder);
-
-router.get('/isPrime/:userId', handler.isPrime);
 
 module.exports = router;
